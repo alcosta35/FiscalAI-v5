@@ -135,6 +135,16 @@ async def health_check():
         }
     }
 
+@app.get("/api/chat/status")
+async def chat_status():
+    """Status simples para o frontend do chat"""
+    return {
+        "inicializado": agente is not None,
+        "agente_inicializado": agente is not None,  # compatibilidade
+        "agente_ativo": agente is not None,  # compatibilidade v5
+        "ready": agente is not None
+    }
+
 # ============================================
 # Rotas - Upload de Arquivos
 # ============================================
