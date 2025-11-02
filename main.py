@@ -270,6 +270,11 @@ async def chat(request: Request):
         }
         
     except Exception as e:
+        print(f"\n❌ ERRO no chat:")
+        print(f"   Tipo: {type(e).__name__}")
+        print(f"   Mensagem: {str(e)}")
+        import traceback
+        traceback.print_exc()
         return JSONResponse({
             "success": False,
             "error": str(e)
@@ -318,6 +323,11 @@ async def cfops_populares():
         cfops = agente.obter_cfops_populares(top_n=10)
         return {"success": True, "data": cfops}
     except Exception as e:
+        print(f"\n❌ ERRO em cfops_populares:")
+        print(f"   Tipo: {type(e).__name__}")
+        print(f"   Mensagem: {str(e)}")
+        import traceback
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
 
 # ============================================

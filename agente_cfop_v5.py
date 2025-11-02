@@ -518,8 +518,8 @@ Seja preciso, objetivo e sempre cite as regras aplicadas."""
                     
                     # Buscar descrição
                     cfop_info = self.df_cfop[self.df_cfop['CFOP'].astype(str) == str(cfop)]
-                    if not cfop_info.empty and 'Descrição' in cfop_info.columns:
-                        desc = cfop_info.iloc[0]['Descrição']
+                    if not cfop_info.empty and 'DESCRIÇÃO' in cfop_info.columns:
+                        desc = cfop_info.iloc[0]['DESCRIÇÃO']
                         if pd.notna(desc):
                             resultado += f"   Descrição: {desc}\n"
                     resultado += "\n"
@@ -724,27 +724,13 @@ Seja preciso, objetivo e sempre cite as regras aplicadas."""
             "cfop_mais_usado": self.df_itens['CFOP'].mode()[0] if not self.df_itens.empty else None
         }
     
-    def obter_cfops_populares(self, top_n: int = 10) -> list:
-        """Retorna lista de CFOPs mais utilizados"""
-        cfops_count = self.df_itens['CFOP'].value_counts().head(top_n)
-        
-        resultado = []
-        for cfop, count in cfops_count.items():
-            resultado.append({
-                "codigo": str(cfop),
-                "count": int(count),
-                "descricao": self._obter_descricao_cfop(str(cfop))
-            })
-        
-        return resultado
-    
     def _obter_descricao_cfop(self, cfop_code: str) -> Optional[str]:
         """Obter descrição de um CFOP"""
         cfop_code = str(cfop_code).replace('.', '')
         cfop_info = self.df_cfop[self.df_cfop['CFOP'].astype(str).str.replace('.', '') == cfop_code]
         
-        if not cfop_info.empty and 'Descrição' in cfop_info.columns:
-            desc = cfop_info.iloc[0]['Descrição']
+        if not cfop_info.empty and 'DESCRIÇÃO' in cfop_info.columns:
+            desc = cfop_info.iloc[0]['DESCRIÇÃO']
             if pd.notna(desc):
                 return str(desc)
         
@@ -904,11 +890,11 @@ Seja preciso, objetivo e sempre cite as regras aplicadas."""
         
         resposta = f"📋 **CFOP {cfop_code}**\n\n"
         
-        if 'Descrição' in info and pd.notna(info['Descrição']):
-            resposta += f"📝 **Descrição:**\n{info['Descrição']}\n\n"
+        if 'DESCRIÇÃO' in info and pd.notna(info['DESCRIÇÃO']):
+            resposta += f"📝 **Descrição:**\n{info['DESCRIÇÃO']}\n\n"
         
-        if 'Aplicação' in info and pd.notna(info['Aplicação']):
-            resposta += f"✅ **Aplicação:**\n{info['Aplicação']}\n\n"
+        if 'APLICAÇÃO' in info and pd.notna(info['APLICAÇÃO']):
+            resposta += f"✅ **Aplicação:**\n{info['APLICAÇÃO']}\n\n"
         
         # Ver quantas vezes é usado
         count = len(self.df_itens[self.df_itens['CFOP'].astype(str).str.replace('.', '') == cfop_code])
@@ -921,8 +907,8 @@ Seja preciso, objetivo e sempre cite as regras aplicadas."""
         cfop_code = str(cfop_code).replace('.', '')
         cfop_info = self.df_cfop[self.df_cfop['Código'].astype(str).str.replace('.', '') == cfop_code]
         
-        if not cfop_info.empty and 'Descrição' in cfop_info.columns:
-            desc = cfop_info.iloc[0]['Descrição']
+        if not cfop_info.empty and 'DESCRIÇÃO' in cfop_info.columns:
+            desc = cfop_info.iloc[0]['DESCRIÇÃO']
             if pd.notna(desc):
                 return str(desc)
         
