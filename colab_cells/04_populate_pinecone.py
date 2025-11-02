@@ -23,31 +23,36 @@ if resposta.lower() != 's':
 else:
     print("\n📂 Preparando ambiente...")
     
-    # Criar diretório data
-    !mkdir -p data
-    
-    # Verificar se arquivo CFOP.csv existe
+    # Criar diretório data com caminho ABSOLUTO para Colab
     import os
-    cfop_path = "data/CFOP.csv"
+    data_dir = "/content/data"
+    os.makedirs(data_dir, exist_ok=True)
+    print(f"   ✅ Diretório criado: {data_dir}")
+    
+    # Verificar se arquivo CFOP.csv existe (caminho absoluto)
+    cfop_path = f"{data_dir}/CFOP.csv"
     
     if not os.path.exists(cfop_path):
         print(f"\n⚠️ Arquivo CFOP.csv não encontrado em: {cfop_path}")
         print("\n📤 AÇÃO NECESSÁRIA:")
         print("   1. Faça upload do arquivo CFOP.csv")
-        print("   2. Coloque-o na pasta 'data/'")
-        print("   3. Execute esta célula novamente")
+        print("   2. Ele será movido automaticamente para o local correto")
         
         from google.colab import files
         print("\n📥 Fazendo upload do arquivo CFOP.csv...")
         uploaded = files.upload()
         
         if 'CFOP.csv' in uploaded:
-            !mv CFOP.csv data/
-            print("✅ Arquivo movido para data/CFOP.csv")
+            # Mover para o diretório correto
+            import shutil
+            shutil.move('CFOP.csv', cfop_path)
+            print(f"✅ Arquivo movido para {cfop_path}")
         else:
             print("❌ Arquivo CFOP.csv não foi enviado. Abortando.")
             import sys
             sys.exit(1)
+    else:
+        print(f"✅ Arquivo já existe: {cfop_path}")
     
     print("\n🔄 Iniciando indexação...")
     print("   Isso pode levar 2-5 minutos dependendo do tamanho do CSV\n")

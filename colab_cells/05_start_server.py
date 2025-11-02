@@ -12,14 +12,17 @@ print("""
 
 import os
 
+# Usar caminho absoluto no Colab
+data_dir = "/content/data"
+os.makedirs(data_dir, exist_ok=True)
+
 # Verificar se tem os CSVs necessários
 print("📂 Verificando arquivos necessários...")
-!mkdir -p data
 
 required_files = {
-    'data/CFOP.csv': 'Tabela de CFOPs',
-    'data/202401_NFs_Cabecalho.csv': 'Cabeçalhos das Notas Fiscais',
-    'data/202401_NFs_Itens.csv': 'Itens das Notas Fiscais'
+    f'{data_dir}/CFOP.csv': 'Tabela de CFOPs',
+    f'{data_dir}/202401_NFs_Cabecalho.csv': 'Cabeçalhos das Notas Fiscais',
+    f'{data_dir}/202401_NFs_Itens.csv': 'Itens das Notas Fiscais'
 }
 
 missing_files = []
@@ -34,16 +37,19 @@ if missing_files:
     print("\n⚠️ ARQUIVOS FALTANDO:")
     print("   Você precisa fazer upload dos seguintes arquivos:\n")
     for f in missing_files:
-        print(f"   • {f}")
+        filename = os.path.basename(f)
+        print(f"   • {filename}")
     
     print("\n📤 Iniciando upload...")
     from google.colab import files
     uploaded = files.upload()
     
-    # Mover arquivos para data/
+    # Mover arquivos para /content/data/
+    import shutil
     for filename in uploaded.keys():
-        !mv {filename} data/
-        print(f"   ✅ {filename} movido para data/")
+        dest_path = f"{data_dir}/{filename}"
+        shutil.move(filename, dest_path)
+        print(f"   ✅ {filename} movido para {dest_path}")
 
 print("\n✅ Todos os arquivos estão prontos!")
 print("\n🚀 Iniciando servidor...\n")
