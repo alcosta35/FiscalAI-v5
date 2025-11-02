@@ -33,6 +33,7 @@ class Settings(BaseSettings):
     
     # Pinecone settings
     pinecone_api_key: str = ""
+    pinecone_host: str = ""  # URL do host (ex: https://cfop-xxx.svc.aped-xxx.pinecone.io)
     pinecone_environment: str = "us-east-1"  # Região do Pinecone
     pinecone_index_name: str = "cfop-fiscal"
     pinecone_cloud: str = "aws"

@@ -18,6 +18,7 @@ class CFOPSemanticSearchService:
     def __init__(
         self,
         index_name: Optional[str] = None,
+        host: Optional[str] = None,
         namespace: Optional[str] = None,
         embedding_model: Optional[str] = None,
         dimension: Optional[int] = None,
@@ -30,6 +31,7 @@ class CFOPSemanticSearchService:
         
         Args:
             index_name: Nome do índice Pinecone (padrão do config.py)
+            host: URL do host Pinecone (ex: https://cfop-xxx.svc.aped-xxx.pinecone.io)
             namespace: Namespace para organizar vetores
             embedding_model: Modelo de embedding OpenAI
             dimension: Dimensão dos vetores
@@ -58,6 +60,7 @@ class CFOPSemanticSearchService:
         
         # Configurações do Pinecone (usar config.py como padrão)
         self.index_name = index_name or settings.pinecone_index_name
+        self.host = host or settings.pinecone_host or None  # Host é opcional
         self.namespace = namespace or settings.pinecone_namespace
         self.embedding_model = embedding_model or settings.openai_embedding_model
         self.embedding_dimension = dimension or settings.pinecone_dimension
@@ -67,6 +70,8 @@ class CFOPSemanticSearchService:
         
         print(f"\n📊 CONFIGURAÇÕES DO PINECONE:")
         print(f"   • Índice: {self.index_name}")
+        if self.host:
+            print(f"   • Host URL: {self.host}")
         print(f"   • Namespace: {self.namespace}")
         print(f"   • Cloud: {self.cloud}")
         print(f"   • Região: {self.region}")
@@ -109,11 +114,38 @@ class CFOPSemanticSearchService:
                 )
             )
             print(f"   ✅ Índice '{self.index_name}' criado com sucesso!")
+            
+            # Aguardar índice ficar pronto e obter host
+            import time
+            time.sleep(5)  # Aguardar criação
+            
+            # Obter informações do índice incluindo host
+            index_info = self.pc.describe_index(self.index_name)
+            if hasattr(index_info, 'host'):
+                self.host = index_info.host
+                print(f"   📡 Host URL: {self.host}")
         else:
             print(f"   ✅ Conectado ao índice existente: {self.index_name}")
+            
+            # Se host não foi fornecido, obter do Pinecone
+            if not self.host:
+                try:
+                    index_info = self.pc.describe_index(self.index_name)
+                    if hasattr(index_info, 'host'):
+                        self.host = index_info.host
+                        print(f"   📡 Host URL obtido: {self.host}")
+                except Exception as e:
+                    print(f"   ⚠️ Não foi possível obter host URL: {e}")
         
-        # Conectar ao índice
-        self.index = self.pc.Index(self.index_name)
+        # Conectar ao índice (usar host se disponível)
+        if self.host:
+            # Conectar usando host URL direto (mais rápido)
+            self.index = self.pc.Index(name=self.index_name, host=self.host)
+            print(f"   ✅ Conectado via host URL")
+        else:
+            # Conectar usando apenas nome (Pinecone resolve automaticamente)
+            self.index = self.pc.Index(self.index_name)
+            print(f"   ✅ Conectado via nome do índice")
         
         # Mostrar estatísticas
         try:
@@ -393,6 +425,7 @@ class CFOPSemanticSearchService:
             "total_vectors": stats.total_vector_count,
             "dimension": self.embedding_dimension,
             "index_name": self.index_name,
+            "host": self.host,
             "namespace": self.namespace,
             "embedding_model": self.embedding_model,
             "metric": self.metric,
