@@ -1,363 +1,219 @@
-# 🚀 FiscalAI v5.0 - Validação Semântica de CFOP
+# FiscalAI - Auditor Fiscal Inteligente v2.0
 
-Sistema inteligente de auditoria e validação de CFOP usando **Busca Semântica** com **Pinecone Vector Database** e **OpenAI Embeddings**.
+Sistema inteligente para auditoria fiscal usando IA com interface web moderna.
 
-## 🆕 Novidades da v5.0
+## 🆕 Novidades da Versão 2.0
 
-### ✨ Busca Semântica Avançada
-- **Embeddings com OpenAI**: Usa `text-embedding-3-small` para criar representações vetoriais
-- **Pinecone Vector Store**: Armazena e busca CFOPs semanticamente similares
-- **Inferência Inteligente**: Analisa a natureza da operação, descrição do produto e contexto geográfico
-- **Score de Confiança**: Retorna probabilidade de acerto para cada sugestão
+- ✨ **Interface Web Completa** - Substituiu o SwaggerUI por páginas web modernas
+- 📤 **Upload de Arquivos** - Usuário faz upload dos CSVs diretamente pelo navegador
+- 📊 **Dashboard de Estatísticas** - Gráficos interativos e indicadores visuais
+- 💬 **Chat IA Interativo** - Interface de chat para perguntas sobre as notas fiscais
+- ✓ **Validação CFOP** - Página dedicada para validação de CFOPs específicos
+- 🎨 **Design Moderno** - Interface verde com gradientes e animações suaves
 
-### 🎯 Funcionalidades Principais
-1. **Validação Semântica**: Compara CFOP registrado vs CFOP sugerido por IA
-2. **Explicações Detalhadas**: Mostra o raciocínio por trás de cada sugestão
-3. **Alternativas**: Lista CFOPs alternativos ordenados por similaridade
-4. **Análise Contextual**: Considera múltiplos fatores simultaneamente
+## 🚀 Como Executar
 
----
+### Opção 1: Google Colab + ngrok (Recomendado para Produção)
 
-## 📋 Pré-requisitos
+1. Abra o notebook: [FiscalAI_Colab.ipynb](FiscalAI_Colab.ipynb)
+2. Faça upload do arquivo `fiscalai-v2.tar.gz`
+3. Configure sua API Key da OpenAI
+4. Execute as células em ordem
+5. Copie o link público do ngrok
+6. Acesse no navegador
 
-### 1. Chaves de API
+**Vantagens:**
+- ✅ Acesso público via ngrok
+- ✅ Não precisa de servidor próprio
+- ✅ Funciona de qualquer lugar
+- ✅ Gratuito
 
-Você precisa de 3 chaves de API:
+### Opção 2: Local (Desenvolvimento)
 
-#### 🔑 OpenAI API Key
-- Crie conta em: https://platform.openai.com/
-- Gere API key em: https://platform.openai.com/api-keys
-- **Custo**: ~$0.02 por 1000 validações
-
-#### 🔑 Pinecone API Key
-- Crie conta gratuita em: https://www.pinecone.io/
-- Vá em: API Keys → Create API Key
-- **Plano gratuito**: 100k vetores, suficiente para CFOPs
-
-#### 🔑 Ngrok Auth Token (apenas para Colab)
-- Crie conta em: https://dashboard.ngrok.com/signup
-- Copie seu token em: https://dashboard.ngrok.com/get-started/your-authtoken
-
-### 2. Arquivos CSV
-
-Coloque na pasta `data/`:
-- `202401_NFs_Cabecalho.csv` - Cabeçalhos das notas fiscais
-- `202401_NFs_Itens.csv` - Itens das notas fiscais
-- `CFOP.csv` - Tabela de CFOPs com campo APLICAÇÃO
-
----
-
-## 🚀 Instalação
-
-### Opção 1: Google Colab (Recomendado)
-
-Use as células abaixo no seu notebook Colab:
-
-#### Célula 1: Clone do Repositório
-```python
-!git clone https://github.com/seu-usuario/FiscalAI-v5
-%cd FiscalAI-v5
-```
-
-#### Célula 2: Instalar Dependências
-```python
-print("📦 Instalando dependências...")
-!pip install -q -r requirements.txt
-print("✅ Instalação concluída!")
-```
-
-#### Célula 3: Configurar API Keys
-```python
-from google.colab import userdata
-import os
-
-print("🔑 Configurando API Keys...")
-
-# Obter chaves dos Secrets do Colab
-openai_key = userdata.get('OPENAI_API_KEY')
-pinecone_key = userdata.get('PINECONE_API_KEY')
-ngrok_token = userdata.get('NGROK_AUTH_TOKEN')
-
-# Criar arquivo .env
-with open('.env', 'w') as f:
-    f.write(f'OPENAI_API_KEY={openai_key}\n')
-    f.write(f'PINECONE_API_KEY={pinecone_key}\n')
-    f.write(f'NGROK_AUTH_TOKEN={ngrok_token}\n')
-
-print("✅ Configuração completa!")
-```
-
-**⚠️ IMPORTANTE**: Adicione os Secrets no Colab:
-1. Clique no ícone 🔑 na barra lateral
-2. Adicione 3 secrets:
-   - `OPENAI_API_KEY` = sk-...
-   - `PINECONE_API_KEY` = ...
-   - `NGROK_AUTH_TOKEN` = ...
-3. Ative "Notebook access" para cada um
-
-#### Célula 4: Popular Índice Pinecone (PRIMEIRA VEZ)
-```python
-# Execute esta célula APENAS na primeira vez
-# ou quando atualizar o arquivo CFOP.csv
-
-print("📊 Populando índice Pinecone com CFOPs...")
-!mkdir -p data
-# Faça upload dos CSVs para a pasta data/
-
-!python scripts/populate_pinecone.py
-
-print("✅ Índice populado! Pronto para usar.")
-```
-
-#### Célula 5: Iniciar Servidor
-```python
-!mkdir -p data
-# Faça upload dos CSVs se ainda não fez
-
-!python main.py
-```
-
-### Opção 2: Local
+#### 1. Instalar Dependências
 
 ```bash
-# Clone o repositório
-git clone https://github.com/seu-usuario/FiscalAI-v5
-cd FiscalAI-v5
-
-# Instale dependências
 pip install -r requirements.txt
+```
 
-# Configure API keys
-cp .env.example .env
-# Edite .env e adicione suas chaves
+#### 2. Configurar API Key
 
-# Popular Pinecone (primeira vez)
-python scripts/populate_pinecone.py
+Crie um arquivo `.env` na raiz do projeto:
 
-# Iniciar servidor
+```bash
+OPENAI_API_KEY=sk-sua-chave-aqui
+```
+
+#### 3. Executar o Sistema
+
+```bash
 python main.py
 ```
 
-Acesse: http://localhost:8000
+O sistema será iniciado em: **http://localhost:8000**
 
----
+## 📋 Como Usar
 
-## 💡 Como Usar
+### Passo 1: Upload dos Arquivos CSV
 
-### 1. Upload dos Arquivos
+1. Acesse http://localhost:8000
+2. Faça upload dos 3 arquivos CSV:
+   - `202401_NFs_Cabecalho.csv`
+   - `202401_NFs_Itens.csv`
+   - `CFOP.csv`
+3. Clique em **"Iniciar Processamento"**
 
-Acesse a interface web e faça upload dos 3 CSVs:
-- Cabeçalho
-- Itens
-- CFOP
+### Passo 2: Navegar pelas Funcionalidades
 
-### 2. Validar CFOPs
+Após a inicialização, você terá acesso a:
 
-**Exemplo de pergunta no chat:**
+- **📊 Estatísticas**: Dashboard com gráficos e indicadores
+- **💬 Chat IA**: Faça perguntas sobre suas notas fiscais
+- **✓ Validação CFOP**: Valide CFOPs de itens específicos
 
-```
-Valide o CFOP do item 1 da nota com chave:
-35240134028316923228550010003680821895807710
-```
+## 🎯 Funcionalidades
 
-**Resposta do sistema:**
+### Dashboard de Estatísticas
 
-```
-╔═══════════════════════════════════════════════════════════════════╗
-║              🔍 VALIDAÇÃO SEMÂNTICA DE CFOP - V5.0                ║
-╚═══════════════════════════════════════════════════════════════════╝
+- Total de notas e itens processados
+- Taxa de conformidade fiscal
+- Divergências críticas
+- CFOPs mais utilizados
+- Distribuição de divergências por tipo
+- Operações por UF
+- Tendência mensal
+- Top 10 notas com mais problemas
 
-📋 DADOS DA OPERAÇÃO:
-• Nota: 368082
-• Item: 1
-• Natureza: VENDA DE MERCADORIA ADQUIRIDA OU RECEBIDA DE TERCEIROS
-• Âmbito: SP → RJ
-• Produto: CAMISETA BÁSICA ALGODÃO
-• Consumidor Final: Não
+### Chat com IA
 
-📊 ANÁLISE SEMÂNTICA:
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Exemplos de perguntas:
+- "Quantas notas fiscais temos no sistema?"
+- "Valide o CFOP do item 2 da nota 35240134028316923228550010003680821895807710"
+- "Quais são os CFOPs mais utilizados?"
+- "Mostre a quinta nota fiscal"
+- "Explique o CFOP 5102"
 
-🎯 CFOP SUGERIDO: 6.102 (Confiança: 94.2%)
+### Validação de CFOP
 
-📋 APLICAÇÃO:
-Venda de mercadoria adquirida ou recebida de terceiros, em operação
-interestadual. Destinada a contribuinte do ICMS para comercialização
-ou industrialização.
+- Valida CFOP de itens específicos
+- Infere o CFOP correto baseado na natureza da operação
+- Identifica divergências críticas
+- Fornece justificativa detalhada
 
-💡 ALTERNATIVAS CONSIDERADAS:
-1. CFOP 6.108 (Score: 87.3%)
-2. CFOP 6.101 (Score: 82.1%)
-
-⚖️ COMPARAÇÃO:
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-• CFOP Registrado: 6.102
-• CFOP Sugerido:   6.102
-• Confiança:       94.2%
-
-✅ RESULTADO: CFOP CORRETO!
-```
-
----
-
-## 🔧 Arquitetura Técnica
-
-### Fluxo de Validação
+## 📁 Estrutura do Projeto
 
 ```
-┌─────────────────┐
-│ Dados da Nota   │
-│ + Item          │
-└────────┬────────┘
-         │
-         v
-┌─────────────────┐
-│ Construir Query │ → "Venda interestadual de mercadoria 
-│ Semântica       │    para contribuinte ICMS..."
-└────────┬────────┘
-         │
-         v
-┌─────────────────┐
-│ OpenAI          │ → Gerar embedding (vetor 1536-d)
-│ Embeddings      │
-└────────┬────────┘
-         │
-         v
-┌─────────────────┐
-│ Pinecone        │ → Buscar top-5 CFOPs similares
-│ Vector Search   │    (cosine similarity)
-└────────┬────────┘
-         │
-         v
-┌─────────────────┐
-│ Análise LLM     │ → GPT-4 explica e valida
-│ (GPT-4)         │
-└────────┬────────┘
-         │
-         v
-┌─────────────────┐
-│ Resultado Final │ → CFOP + Score + Explicação
-└─────────────────┘
+FiscalAI/
+├── main.py                 # FastAPI app principal
+├── config.py               # Configurações
+├── agente_cfop.py          # Agente validador (LangChain + OpenAI)
+├── requirements.txt        # Dependências
+├── .env                    # API Keys (não commitar)
+├── models/                 # Modelos Pydantic
+│   └── schemas.py
+├── routes/                 # Endpoints da API
+│   ├── chat.py
+│   ├── estatisticas.py
+│   └── validacao.py
+├── services/               # Lógica de negócio
+│   └── estatisticas_service.py
+├── static/                 # Arquivos estáticos
+│   └── css/
+│       └── style.css
+├── templates/              # Páginas HTML
+│   ├── index.html          # Upload de arquivos
+│   ├── estatisticas.html   # Dashboard
+│   ├── chat.html           # Chat IA
+│   └── validacao.html      # Validação CFOP
+└── data/                   # Arquivos CSV (criado automaticamente)
 ```
 
-### Estrutura de Arquivos
+## 🔑 API Endpoints
 
-```
-FiscalAI-v5/
-├── services/
-│   ├── __init__.py
-│   └── semantic_search_service.py  ← Serviço Pinecone
-├── agente_cfop_v5.py               ← Agente com busca semântica
-├── config.py                        ← Configurações
-├── main.py                          ← FastAPI app
-├── requirements.txt                 ← Dependências
-├── scripts/
-│   └── populate_pinecone.py        ← Popular índice
-├── data/                            ← CSVs (não versionado)
-├── templates/                       ← HTML
-└── static/                          ← CSS/JS
-```
+### Upload e Inicialização
+- `POST /api/upload-csv` - Upload de arquivo CSV
+- `POST /api/inicializar` - Inicializar sistema
+- `POST /api/resetar` - Resetar sistema
+- `GET /api/status-arquivos` - Status dos arquivos
 
----
+### Estatísticas
+- `GET /api/estatisticas/resumo` - Resumo geral
+- `GET /api/estatisticas/cfop-distribuicao` - Distribuição de CFOPs
+- `GET /api/estatisticas/divergencias-tipo` - Divergências por tipo
+- `GET /api/estatisticas/operacoes-uf` - Operações por UF
+- `GET /api/estatisticas/tendencia-mensal` - Tendência mensal
+- `GET /api/estatisticas/top-divergencias` - Top divergências
 
-## 📊 Comparação v4 vs v5
+### Chat
+- `POST /api/chat/perguntar` - Enviar pergunta ao agente
 
-| Recurso | v4 | v5 |
-|---------|----|----|
-| **Método de Inferência** | Regras hardcoded | Busca semântica |
-| **Precisão** | ~75% | ~92% |
-| **Explicações** | Básicas | Detalhadas com score |
-| **Contexto** | Limitado | Análise completa |
-| **Manutenção** | Manual (atualizar regras) | Automática (reindexar CSV) |
-| **Novos CFOPs** | Requer código | Apenas adicionar ao CSV |
+### Validação
+- `POST /api/validacao/cfop-item` - Validar CFOP de item
 
----
+## 🛠️ Tecnologias Utilizadas
 
-## 🛠️ Manutenção
+### Backend
+- **FastAPI** - Framework web moderno e rápido
+- **LangChain** - Framework para aplicações com LLM
+- **OpenAI GPT-4** - Modelo de linguagem
+- **Pandas** - Análise de dados
+- **Pydantic** - Validação de dados
 
-### Atualizar CFOPs
+### Frontend
+- **HTML5/CSS3** - Estrutura e estilos
+- **JavaScript Vanilla** - Interatividade
+- **Chart.js** - Gráficos interativos
+- **Design Responsivo** - Funciona em mobile e desktop
 
-Quando houver mudanças na legislação:
+## 📊 Requisitos do Sistema
 
-1. Atualize o arquivo `CFOP.csv`
-2. Execute:
-```python
-!python scripts/populate_pinecone.py
-```
+- Python 3.10+
+- OpenAI API Key
+- 4GB RAM mínimo
+- Navegador moderno (Chrome, Firefox, Edge, Safari)
 
-O índice será atualizado automaticamente!
+## 🔒 Segurança
 
-### Limpar Índice
+- Nunca commite o arquivo `.env` com suas API Keys
+- Use HTTPS em produção
+- Configure CORS adequadamente para seu domínio
+- Valide e sanitize inputs do usuário
 
-```python
-from services.semantic_search_service import CFOPSemanticSearchService
+## 📝 Notas de Desenvolvimento
 
-service = CFOPSemanticSearchService()
-service.clear_index()
-print("Índice limpo!")
-```
+### Para adicionar novas funcionalidades:
 
----
+1. **Nova página HTML**: Adicione em `/templates/`
+2. **Nova rota de página**: Adicione em `main.py`
+3. **Nova API**: Crie um router em `/routes/`
+4. **Nova lógica de negócio**: Adicione em `/services/`
 
-## 💰 Custos
+### Logs
 
-### OpenAI
-- Embeddings: $0.02 / 1M tokens
-- GPT-4: $0.01-0.03 / 1K tokens
-- **Estimativa**: ~$0.50 para validar 1000 itens
-
-### Pinecone
-- Plano gratuito: 100k vetores (suficiente)
-- Plano pago: $0.096/hora se precisar mais
-
----
+O sistema gera logs detalhados no console para debug.
 
 ## 🐛 Troubleshooting
 
-### Erro: "OPENAI_API_KEY não encontrada"
-- Verifique se adicionou o Secret no Colab
-- Ou se editou o arquivo `.env` corretamente
+**Sistema não inicializa:**
+- Verifique se a API Key está correta no `.env`
+- Verifique se todos os arquivos CSV foram carregados
 
-### Erro: "PINECONE_API_KEY não encontrada"
-- Crie uma conta em pinecone.io
-- Copie a API key e adicione aos Secrets
+**Erro ao fazer upload:**
+- Verifique se o arquivo é CSV válido
+- Verifique se o arquivo não está corrompido
 
-### Erro: "Índice vazio"
-- Execute `python scripts/populate_pinecone.py`
-- Aguarde a indexação completar
-
-### Ngrok retorna 403
-- Atualize seu authtoken em ngrok.com
-- Adicione ao arquivo .env
-
----
-
-## 📚 Recursos Adicionais
-
-- [Documentação OpenAI](https://platform.openai.com/docs)
-- [Documentação Pinecone](https://docs.pinecone.io/)
-- [LangChain Docs](https://python.langchain.com/)
-
----
+**Chat não responde:**
+- Verifique a conexão com a API OpenAI
+- Verifique se ainda tem créditos na conta OpenAI
 
 ## 📄 Licença
 
-MIT License - Use como quiser! 
+Este projeto é para uso educacional e interno.
+
+## 👥 Contato
+
+Para dúvidas e suporte, consulte a documentação ou entre em contato com a equipe de desenvolvimento.
 
 ---
 
-## 🤝 Contribuindo
-
-Pull requests são bem-vindos! Para mudanças grandes, abra uma issue primeiro.
-
----
-
-## 👨‍💻 Autor
-
-**FiscalAI Team**
-- 📧 Email: seu-email@example.com
-- 🐙 GitHub: https://github.com/seu-usuario
-
----
-
-**🎉 Aproveite a FiscalAI v5.0!**
+**FiscalAI v2.0** - Auditoria Fiscal Inteligente com IA 🚀

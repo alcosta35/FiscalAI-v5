@@ -1,6 +1,6 @@
 # config.py
 """
-Configuration settings for FiscalAI v5.0
+Configuration settings for FiscalAI
 """
 from pydantic_settings import BaseSettings
 from pathlib import Path
@@ -20,8 +20,8 @@ class Settings(BaseSettings):
     """Application settings"""
     
     # App info
-    app_name: str = "FiscalAI v5.0 - Validação Semântica de CFOP"
-    app_version: str = "5.0.0"
+    app_name: str = "FiscalAI - Auditor Fiscal Inteligente"
+    app_version: str = "2.0.0"
 
     # API settings
     api_prefix: str = "/api"
@@ -29,18 +29,14 @@ class Settings(BaseSettings):
     # OpenAI API
     openai_api_key: str = ""
     openai_model: str = "gpt-4"
-    openai_embedding_model: str = "text-embedding-3-small"
     
     # Pinecone settings
     pinecone_api_key: str = ""
-    pinecone_host: str = ""  # URL do host (ex: https://cfop-xxx.svc.aped-xxx.pinecone.io)
-    pinecone_environment: str = "us-east-1"  # Região do Pinecone
     pinecone_index_name: str = "cfop-fiscal"
-    pinecone_cloud: str = "aws"
-    pinecone_region: str = "us-east-1"
-    pinecone_namespace: str = "cfop-production"  # Namespace para organizar vetores
-    pinecone_dimension: int = 1536  # Dimensão do text-embedding-3-small
-    pinecone_metric: str = "cosine"  # Métrica de similaridade
+    pinecone_namespace: str = "default"
+    pinecone_host: str = "https://cfop-fiscal-x8q6et6.svc.aped-4627-b74a.pinecone.io"
+    pinecone_dimension: int = 1536
+    pinecone_metric: str = "cosine"
     
     # Ngrok settings
     ngrok_auth_token: str = ""
@@ -52,9 +48,6 @@ class Settings(BaseSettings):
     cabecalho_csv: str = str(DATA_DIR / "202401_NFs_Cabecalho.csv")
     itens_csv: str = str(DATA_DIR / "202401_NFs_Itens.csv")
     cfop_csv: str = str(DATA_DIR / "CFOP.csv")
-    
-    # Features
-    use_semantic_search: bool = True
     
     # Estatísticas
     MAX_SAMPLE_SIZE: int = 200

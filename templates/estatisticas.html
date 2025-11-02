@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FiscalAI - Estatísticas</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div class="header-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                </svg>
+            </div>
+            <h1>Estatísticas e Análises</h1>
+            <p>Dashboard completo de auditoria fiscal</p>
+        </div>
+
+        <!-- Navigation -->
+        <div class="nav">
+            <a href="/" class="nav-item">🏠 Início</a>
+            <a href="/estatisticas" class="nav-item active">📊 Estatísticas</a>
+            <a href="/chat" class="nav-item">💬 Chat IA</a>
+            <a href="/validacao" class="nav-item">✓ Validação CFOP</a>
+        </div>
+
+        <!-- Alert Container -->
+        <div id="alertContainer"></div>
+
+        <!-- Loading -->
+        <div id="loadingContainer" class="hidden">
+            <div class="spinner"></div>
+        </div>
+
+        <!-- Stats Grid -->
+        <div id="statsGrid" class="stats-grid hidden">
+            <div class="stat-card fade-in">
+                <div class="stat-label">Total de Notas</div>
+                <div class="stat-value" id="totalNotas">0</div>
+            </div>
+            <div class="stat-card fade-in">
+                <div class="stat-label">Total de Itens</div>
+                <div class="stat-value" id="totalItens">0</div>
+            </div>
+            <div class="stat-card fade-in">
+                <div class="stat-label">Taxa de Conformidade</div>
+                <div class="stat-value" id="taxaConformidade">0%</div>
+            </div>
+            <div class="stat-card fade-in">
+                <div class="stat-label">Divergências Críticas</div>
+                <div class="stat-value" id="divergenciasCriticas">0</div>
+            </div>
+        </div>
+
+        <!-- Cards de Gráficos -->
+        <div id="chartsContainer" class="hidden">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(500px, 1fr)); gap: 20px; margin-top: 30px;">
+                <!-- CFOPs mais usados -->
+                <div class="card fade-in">
+                    <h2 style="margin-bottom: 20px; color: var(--verde-escuro);">📊 CFOPs Mais Utilizados</h2>
+                    <canvas id="chartCfops"></canvas>
+                </div>
+
+                <!-- Divergências por tipo -->
+                <div class="card fade-in">
+                    <h2 style="margin-bottom: 20px; color: var(--verde-escuro);">⚠️ Divergências por Tipo</h2>
+                    <canvas id="chartDivergencias"></canvas>
+                </div>
+
+                <!-- Operações por UF -->
+                <div class="card fade-in">
+                    <h2 style="margin-bottom: 20px; color: var(--verde-escuro);">🗺️ Operações por UF</h2>
+                    <canvas id="chartUf"></canvas>
+                </div>
+
+                <!-- Tendência Mensal -->
+                <div class="card fade-in">
+                    <h2 style="margin-bottom: 20px; color: var(--verde-escuro);">📈 Tendência Mensal</h2>
+                    <canvas id="chartTendencia"></canvas>
+                </div>
+            </div>
+
+            <!-- Top Divergências -->
+            <div class="card fade-in" style="margin-top: 30px;">
+                <h2 style="margin-bottom: 20px; color: var(--verde-escuro);">🔍 Top 10 Notas com Mais Divergências</h2>
+                <div id="topDivergencias"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let charts = {};
+
+        window.addEventListener('load', async () => {
+            await carregarEstatisticas();
+        });
+
+        async function carregarEstatisticas() {
+            document.getElementById('loadingContainer').classList.remove('hidden');
+
+            try {
+                // Verificar se sistema está inicializado
+                const statusResponse = await fetch('/api/status-arquivos');
+                const statusData = await statusResponse.json();
+
+                if (!statusData.agente_inicializado) {
+                    showAlert('Sistema não inicializado! Por favor, faça o upload dos arquivos CSV primeiro.', 'error');
+                    setTimeout(() => {
+                        window.location.href = '/';
+                    }, 2000);
+                    return;
+                }
+
+                // Carregar resumo
+                await carregarResumo();
+
+                // Carregar gráficos
+                await Promise.all([
+                    carregarDistribuicaoCfop(),
+                    carregarDivergenciasTipo(),
+                    carregarOperacoesUf(),
+                    carregarTendenciaMensal(),
+                    carregarTopDivergencias()
+                ]);
+
+                document.getElementById('statsGrid').classList.remove('hidden');
+                document.getElementById('chartsContainer').classList.remove('hidden');
+
+            } catch (error) {
+                showAlert(`Erro ao carregar estatísticas: ${error.message}`, 'error');
+            } finally {
+                document.getElementById('loadingContainer').classList.add('hidden');
+            }
+        }
+
+        async function carregarResumo() {
+            const response = await fetch('/api/estatisticas/resumo');
+            const data = await response.json();
+
+            document.getElementById('totalNotas').textContent = data.total_notas.toLocaleString();
+            document.getElementById('totalItens').textContent = data.total_itens.toLocaleString();
+            document.getElementById('taxaConformidade').textContent = data.taxa_conformidade + '%';
+            document.getElementById('divergenciasCriticas').textContent = data.divergencias_criticas;
+        }
+
+        async function carregarDistribuicaoCfop() {
+            const response = await fetch('/api/estatisticas/cfop-distribuicao');
+            const data = await response.json();
+
+            const ctx = document.getElementById('chartCfops');
+            charts.cfops = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.cfops.map(c => c.cfop),
+                    datasets: [{
+                        label: 'Quantidade',
+                        data: data.cfops.map(c => c.quantidade),
+                        backgroundColor: 'rgba(16, 185, 129, 0.8)',
+                        borderColor: 'rgba(16, 185, 129, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: { beginAtZero: true }
+                    }
+                }
+            });
+        }
+
+        async function carregarDivergenciasTipo() {
+            const response = await fetch('/api/estatisticas/divergencias-tipo');
+            const data = await response.json();
+
+            const ctx = document.getElementById('chartDivergencias');
+            charts.divergencias = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: data.divergencias.map(d => d.tipo),
+                    datasets: [{
+                        data: data.divergencias.map(d => d.quantidade),
+                        backgroundColor: data.divergencias.map(d => d.cor),
+                        borderWidth: 2,
+                        borderColor: '#fff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: { position: 'bottom' }
+                    }
+                }
+            });
+        }
+
+        async function carregarOperacoesUf() {
+            const response = await fetch('/api/estatisticas/operacoes-uf');
+            const data = await response.json();
+
+            const ctx = document.getElementById('chartUf');
+            charts.uf = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.operacoes.map(o => o.uf),
+                    datasets: [{
+                        label: 'Operações',
+                        data: data.operacoes.map(o => o.quantidade),
+                        backgroundColor: 'rgba(34, 197, 94, 0.8)',
+                        borderColor: 'rgba(34, 197, 94, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    indexAxis: 'y',
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        x: { beginAtZero: true }
+                    }
+                }
+            });
+        }
+
+        async function carregarTendenciaMensal() {
+            const response = await fetch('/api/estatisticas/tendencia-mensal');
+            const data = await response.json();
+
+            const ctx = document.getElementById('chartTendencia');
+            charts.tendencia = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.tendencia.map(t => t.mes),
+                    datasets: [
+                        {
+                            label: 'Notas',
+                            data: data.tendencia.map(t => t.notas),
+                            borderColor: 'rgba(16, 185, 129, 1)',
+                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        },
+                        {
+                            label: 'Divergências',
+                            data: data.tendencia.map(t => t.divergencias),
+                            borderColor: 'rgba(239, 68, 68, 1)',
+                            backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: { position: 'bottom' }
+                    },
+                    scales: {
+                        y: { beginAtZero: true }
+                    }
+                }
+            });
+        }
+
+        async function carregarTopDivergencias() {
+            const response = await fetch('/api/estatisticas/top-divergencias');
+            const data = await response.json();
+
+            const container = document.getElementById('topDivergencias');
+            
+            if (data.top_divergencias.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: var(--cinza-medio);">Nenhuma divergência encontrada</p>';
+                return;
+            }
+
+            const html = `
+                <table style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr style="background: var(--cinza-claro); text-align: left;">
+                            <th style="padding: 12px;">Nota</th>
+                            <th style="padding: 12px;">Divergências</th>
+                            <th style="padding: 12px;">Natureza</th>
+                            <th style="padding: 12px;">Valor</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${data.top_divergencias.map((d, i) => `
+                            <tr style="border-bottom: 1px solid var(--cinza-claro);">
+                                <td style="padding: 12px;">${d.nota}</td>
+                                <td style="padding: 12px;">
+                                    <span style="background: var(--vermelho); color: white; padding: 4px 12px; border-radius: 12px; font-size: 0.9rem;">
+                                        ${d.divergencias}
+                                    </span>
+                                </td>
+                                <td style="padding: 12px; color: var(--cinza-escuro);">${d.natureza}</td>
+                                <td style="padding: 12px; font-weight: 600;">R$ ${d.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+
+            container.innerHTML = html;
+        }
+
+        function showAlert(message, type) {
+            const alertContainer = document.getElementById('alertContainer');
+            const alertClass = type === 'success' ? 'alert-success' : (type === 'error' ? 'alert-error' : 'alert-warning');
+            
+            alertContainer.innerHTML = `
+                <div class="alert ${alertClass} fade-in">
+                    ${message}
+                </div>
+            `;
+
+            setTimeout(() => {
+                alertContainer.innerHTML = '';
+            }, 5000);
+        }
+    </script>
+</body>
+</html>

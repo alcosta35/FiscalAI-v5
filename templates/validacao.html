@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FiscalAI - Validação CFOP</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div class="header-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+            </div>
+            <h1>Validação de CFOP</h1>
+            <p>Valide o CFOP de itens específicos das suas notas fiscais</p>
+        </div>
+
+        <!-- Navigation -->
+        <div class="nav">
+            <a href="/" class="nav-item">🏠 Início</a>
+            <a href="/estatisticas" class="nav-item">📊 Estatísticas</a>
+            <a href="/chat" class="nav-item">💬 Chat IA</a>
+            <a href="/validacao" class="nav-item active">✓ Validação CFOP</a>
+        </div>
+
+        <!-- Alert Container -->
+        <div id="alertContainer"></div>
+
+        <!-- Card Principal -->
+        <div class="card fade-in">
+            <!-- Info Box -->
+            <div class="info-box">
+                <div class="info-icon">ℹ️</div>
+                <div class="info-content">
+                    <h3>Como validar:</h3>
+                    <p>
+                        1. Informe a <strong>Chave de Acesso</strong> da nota fiscal (44 dígitos)<br>
+                        2. Informe o <strong>Número do Item</strong> que deseja validar (1, 2, 3... ou "primeiro", "segundo"...)<br>
+                        3. O sistema irá analisar a natureza da operação e validar se o CFOP está correto
+                    </p>
+                </div>
+            </div>
+
+            <!-- Formulário -->
+            <form onsubmit="validarCfop(event)">
+                <div class="form-group">
+                    <label class="form-label" for="chaveAcesso">
+                        🔑 Chave de Acesso (44 dígitos)
+                    </label>
+                    <input 
+                        type="text" 
+                        class="form-input" 
+                        id="chaveAcesso" 
+                        placeholder="Ex: 35240134028316923228550010003680821895807710"
+                        maxlength="44"
+                        required
+                    >
+                    <small style="color: var(--cinza-medio); display: block; margin-top: 5px;">
+                        A chave de acesso é o número longo de 44 dígitos da nota fiscal
+                    </small>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="numeroItem">
+                        📦 Número do Item
+                    </label>
+                    <input 
+                        type="text" 
+                        class="form-input" 
+                        id="numeroItem" 
+                        placeholder="Ex: 1, 2, 3 ou 'primeiro', 'segundo'"
+                        required
+                    >
+                    <small style="color: var(--cinza-medio); display: block; margin-top: 5px;">
+                        Digite o número ou posição do item (primeiro, segundo, terceiro...)
+                    </small>
+                </div>
+
+                <div class="btn-group">
+                    <button type="button" class="btn btn-secondary" onclick="limparFormulario()">
+                        Limpar
+                    </button>
+                    <button type="submit" class="btn btn-primary" id="btnValidar">
+                        Validar CFOP
+                    </button>
+                </div>
+            </form>
+
+            <!-- Exemplos -->
+            <div style="margin-top: 30px; padding-top: 30px; border-top: 1px solid var(--cinza-claro);">
+                <h3 style="margin-bottom: 15px; color: var(--verde-escuro);">💡 Exemplos para testar:</h3>
+                <div style="display: grid; gap: 10px;">
+                    <button 
+                        class="btn btn-secondary" 
+                        style="text-align: left; padding: 12px 20px;"
+                        onclick="preencherExemplo('35240134028316923228550010003680821895807710', '1')"
+                    >
+                        📄 Validar Item 1 da nota 352401...
+                    </button>
+                    <button 
+                        class="btn btn-secondary" 
+                        style="text-align: left; padding: 12px 20px;"
+                        onclick="preencherExemplo('35240134028316923228550010003680821895807710', 'segundo')"
+                    >
+                        📄 Validar segundo item da nota 352401...
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Resultado -->
+        <div id="resultadoContainer" class="hidden" style="margin-top: 30px;">
+            <div class="card fade-in">
+                <h2 style="margin-bottom: 20px; color: var(--verde-escuro);" id="resultadoTitulo">
+                    📋 Resultado da Validação
+                </h2>
+                <div id="resultadoConteudo" style="background: var(--cinza-claro); padding: 20px; border-radius: 12px; font-family: monospace; white-space: pre-wrap; line-height: 1.6;">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        window.addEventListener('load', async () => {
+            // Verificar se sistema está inicializado
+            const statusResponse = await fetch('/api/status-arquivos');
+            const statusData = await statusResponse.json();
+
+            if (!statusData.agente_inicializado) {
+                showAlert('Sistema não inicializado! Por favor, faça o upload dos arquivos CSV primeiro.', 'error');
+                setTimeout(() => {
+                    window.location.href = '/';
+                }, 2000);
+            }
+        });
+
+        async function validarCfop(event) {
+            event.preventDefault();
+
+            const chaveAcesso = document.getElementById('chaveAcesso').value.trim();
+            const numeroItem = document.getElementById('numeroItem').value.trim();
+
+            // Validar chave de acesso
+            if (chaveAcesso.length !== 44) {
+                showAlert('A chave de acesso deve ter exatamente 44 dígitos!', 'error');
+                return;
+            }
+
+            if (!numeroItem) {
+                showAlert('Por favor, informe o número do item!', 'error');
+                return;
+            }
+
+            // Desabilitar botão
+            const btnValidar = document.getElementById('btnValidar');
+            btnValidar.disabled = true;
+            btnValidar.textContent = 'Validando...';
+
+            // Esconder resultado anterior
+            document.getElementById('resultadoContainer').classList.add('hidden');
+
+            try {
+                const response = await fetch('/api/validacao/cfop-item', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        chave_acesso: chaveAcesso,
+                        numero_item: numeroItem
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    mostrarResultado(data.resultado, true);
+                    showAlert('✓ Validação concluída!', 'success');
+                } else {
+                    showAlert(`Erro: ${data.detail}`, 'error');
+                }
+            } catch (error) {
+                showAlert(`Erro ao validar: ${error.message}`, 'error');
+            } finally {
+                // Reabilitar botão
+                btnValidar.disabled = false;
+                btnValidar.textContent = 'Validar CFOP';
+            }
+        }
+
+        function mostrarResultado(resultado, sucesso) {
+            const container = document.getElementById('resultadoContainer');
+            const titulo = document.getElementById('resultadoTitulo');
+            const conteudo = document.getElementById('resultadoConteudo');
+
+            // Determinar se há divergência
+            const temDivergencia = resultado.includes('ALERTA') || resultado.includes('DIVERGÊNCIA');
+            
+            if (temDivergencia) {
+                titulo.textContent = '⚠️ Resultado da Validação - DIVERGÊNCIA ENCONTRADA';
+                titulo.style.color = 'var(--vermelho)';
+            } else if (resultado.includes('APROVADA')) {
+                titulo.textContent = '✅ Resultado da Validação - CFOP CORRETO';
+                titulo.style.color = 'var(--verde-escuro)';
+            } else {
+                titulo.textContent = '📋 Resultado da Validação';
+                titulo.style.color = 'var(--cinza-escuro)';
+            }
+
+            conteudo.textContent = resultado;
+            container.classList.remove('hidden');
+
+            // Scroll até o resultado
+            setTimeout(() => {
+                container.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 100);
+        }
+
+        function limparFormulario() {
+            document.getElementById('chaveAcesso').value = '';
+            document.getElementById('numeroItem').value = '';
+            document.getElementById('resultadoContainer').classList.add('hidden');
+        }
+
+        function preencherExemplo(chave, item) {
+            document.getElementById('chaveAcesso').value = chave;
+            document.getElementById('numeroItem').value = item;
+            
+            // Scroll até o formulário
+            document.querySelector('.form-group').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        function showAlert(message, type) {
+            const alertContainer = document.getElementById('alertContainer');
+            const alertClass = type === 'success' ? 'alert-success' : (type === 'error' ? 'alert-error' : 'alert-warning');
+            
+            alertContainer.innerHTML = `
+                <div class="alert ${alertClass} fade-in">
+                    ${message}
+                </div>
+            `;
+
+            setTimeout(() => {
+                alertContainer.innerHTML = '';
+            }, 5000);
+        }
+    </script>
+</body>
+</html>

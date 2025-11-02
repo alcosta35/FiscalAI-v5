@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FiscalAI - Chat IA</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div class="header-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/>
+                </svg>
+            </div>
+            <h1>Chat com Auditor Fiscal IA</h1>
+            <p>Faça perguntas sobre suas notas fiscais e CFOPs</p>
+        </div>
+
+        <!-- Navigation -->
+        <div class="nav">
+            <a href="/" class="nav-item">🏠 Início</a>
+            <a href="/estatisticas" class="nav-item">📊 Estatísticas</a>
+            <a href="/chat" class="nav-item active">💬 Chat IA</a>
+            <a href="/validacao" class="nav-item">✓ Validação CFOP</a>
+        </div>
+
+        <!-- Alert Container -->
+        <div id="alertContainer"></div>
+
+        <!-- Card Principal -->
+        <div class="card fade-in">
+            <!-- Info Box -->
+            <div class="info-box">
+                <div class="info-icon">💡</div>
+                <div class="info-content">
+                    <h3>Exemplos de Perguntas:</h3>
+                    <p>
+                        • "Quantas notas fiscais temos no sistema?"<br>
+                        • "Valide o CFOP do item 2 da nota 35240134028316923228550010003680821895807710"<br>
+                        • "Quais são os CFOPs mais utilizados?"<br>
+                        • "Mostre a quinta nota fiscal"<br>
+                        • "Explique o CFOP 5102"
+                    </p>
+                </div>
+            </div>
+
+            <!-- Chat Container -->
+            <div class="chat-container">
+                <div class="chat-messages" id="chatMessages">
+                    <div class="chat-message assistant">
+                        👋 Olá! Sou o Auditor Fiscal IA. Posso ajudar você a validar CFOPs, analisar notas fiscais e responder dúvidas sobre operações fiscais. Como posso ajudar?
+                    </div>
+                </div>
+
+                <!-- Input Area -->
+                <div class="chat-input-area">
+                    <input 
+                        type="text" 
+                        class="chat-input" 
+                        id="chatInput" 
+                        placeholder="Digite sua pergunta..." 
+                        onkeypress="handleKeyPress(event)"
+                    >
+                    <button class="btn btn-primary" onclick="enviarPergunta()" id="btnEnviar">
+                        Enviar
+                    </button>
+                </div>
+            </div>
+
+            <!-- Sugestões -->
+            <div style="margin-top: 20px; display: flex; gap: 10px; flex-wrap: wrap;">
+                <button class="btn btn-secondary" style="font-size: 0.9rem; padding: 8px 16px;" onclick="usarSugestao('Quantas notas fiscais temos?')">
+                    💼 Total de Notas
+                </button>
+                <button class="btn btn-secondary" style="font-size: 0.9rem; padding: 8px 16px;" onclick="usarSugestao('Quais são os CFOPs mais usados?')">
+                    📊 CFOPs Populares
+                </button>
+                <button class="btn btn-secondary" style="font-size: 0.9rem; padding: 8px 16px;" onclick="usarSugestao('Explique o CFOP 5102')">
+                    ❓ Explicar CFOP
+                </button>
+                <button class="btn btn-secondary" style="font-size: 0.9rem; padding: 8px 16px;" onclick="limparChat()">
+                    🗑️ Limpar Chat
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        window.addEventListener('load', async () => {
+            // Verificar se sistema está inicializado
+            const statusResponse = await fetch('/api/status-arquivos');
+            const statusData = await statusResponse.json();
+
+            if (!statusData.agente_inicializado) {
+                showAlert('Sistema não inicializado! Por favor, faça o upload dos arquivos CSV primeiro.', 'error');
+                setTimeout(() => {
+                    window.location.href = '/';
+                }, 2000);
+            }
+        });
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                enviarPergunta();
+            }
+        }
+
+        function usarSugestao(pergunta) {
+            document.getElementById('chatInput').value = pergunta;
+            enviarPergunta();
+        }
+
+        async function enviarPergunta() {
+            const input = document.getElementById('chatInput');
+            const pergunta = input.value.trim();
+
+            if (!pergunta) {
+                showAlert('Por favor, digite uma pergunta.', 'warning');
+                return;
+            }
+
+            // Adicionar mensagem do usuário
+            adicionarMensagem(pergunta, 'user');
+
+            // Limpar input
+            input.value = '';
+
+            // Desabilitar botão
+            const btnEnviar = document.getElementById('btnEnviar');
+            btnEnviar.disabled = true;
+            btnEnviar.textContent = 'Processando...';
+
+            // Adicionar mensagem de loading
+            const loadingId = adicionarMensagem('🤔 Pensando...', 'assistant');
+
+            try {
+                const response = await fetch('/api/chat/perguntar', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ pergunta: pergunta })
+                });
+
+                const data = await response.json();
+
+                // Remover mensagem de loading
+                document.getElementById(loadingId).remove();
+
+                if (response.ok) {
+                    // Adicionar resposta do assistente
+                    adicionarMensagem(data.resposta, 'assistant');
+                } else {
+                    adicionarMensagem(`❌ Erro: ${data.detail}`, 'assistant');
+                }
+            } catch (error) {
+                // Remover mensagem de loading
+                document.getElementById(loadingId).remove();
+                adicionarMensagem(`❌ Erro ao processar pergunta: ${error.message}`, 'assistant');
+            } finally {
+                // Reabilitar botão
+                btnEnviar.disabled = false;
+                btnEnviar.textContent = 'Enviar';
+            }
+        }
+
+        function adicionarMensagem(texto, tipo) {
+            const messagesContainer = document.getElementById('chatMessages');
+            const messageId = 'msg-' + Date.now();
+            
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `chat-message ${tipo} fade-in`;
+            messageDiv.id = messageId;
+            messageDiv.textContent = texto;
+
+            messagesContainer.appendChild(messageDiv);
+
+            // Scroll para o final
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+            return messageId;
+        }
+
+        function limparChat() {
+            if (!confirm('Tem certeza que deseja limpar o chat?')) {
+                return;
+            }
+
+            const messagesContainer = document.getElementById('chatMessages');
+            messagesContainer.innerHTML = `
+                <div class="chat-message assistant">
+                    👋 Chat limpo! Como posso ajudar você?
+                </div>
+            `;
+        }
+
+        function showAlert(message, type) {
+            const alertContainer = document.getElementById('alertContainer');
+            const alertClass = type === 'success' ? 'alert-success' : (type === 'error' ? 'alert-error' : 'alert-warning');
+            
+            alertContainer.innerHTML = `
+                <div class="alert ${alertClass} fade-in">
+                    ${message}
+                </div>
+            `;
+
+            setTimeout(() => {
+                alertContainer.innerHTML = '';
+            }, 5000);
+        }
+    </script>
+</body>
+</html>
