@@ -13,7 +13,7 @@ from langchain.schema import SystemMessage
 from dotenv import load_dotenv
 import traceback
 import re
-from typing import Optional
+from typing import Optional, Dict
 
 from config import settings, DATA_DIR
 from services.semantic_search_service import CFOPSemanticSearchService
