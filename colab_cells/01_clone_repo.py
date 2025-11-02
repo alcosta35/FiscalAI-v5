@@ -12,7 +12,7 @@ print("""
 """)
 
 print("📥 Clonando repositório...")
-!git clone https://github.com/SEU-USUARIO/FiscalAI-v5
+!git clone https://github.com/alcosta35/FiscalAI-v5
 %cd FiscalAI-v5
 
 print("\n✅ Repositório clonado com sucesso!")

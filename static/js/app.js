@@ -57,13 +57,13 @@ function setupEnterKey() {
     }
 }
 
-// Check de saúde da aplicação
 async function checkHealth() {
     try {
         const response = await fetch('/health');
         const data = await response.json();
         
-        app.agenteAtivo = data.agente_ativo;
+        // Corrigido: usar agente_inicializado (compatível com v4)
+        app.agenteAtivo = data.agente_inicializado || data.agente_ativo;
         app.arquivosCarregados = data.arquivos_carregados;
         
         updateUI();

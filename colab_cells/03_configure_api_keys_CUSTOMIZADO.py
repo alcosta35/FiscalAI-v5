@@ -45,9 +45,9 @@ except Exception as e:
 print("\n⚙️ Configurando Pinecone...")
 
 # SUAS CONFIGURAÇÕES ⬇️⬇️⬇️
-PINECONE_INDEX_NAME = "cfop"
+PINECONE_INDEX_NAME = "cfop-fiscal"
 PINECONE_NAMESPACE = "default"
-PINECONE_HOST = "https://cfop-x8q6et6.svc.aped-4627-b74a.pinecone.io"
+PINECONE_HOST = "https://cfop-fiscal-x8q6et6.svc.aped-4627-b74a.pinecone.io"
 PINECONE_DIMENSION = 1536
 PINECONE_METRIC = "cosine"
 
