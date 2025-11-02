@@ -116,7 +116,7 @@ async def home(request: Request):
             "app_name": settings.app_name,
             "version": settings.app_version,
             "arquivos_carregados": all(uploaded_files.values()),
-            "agente_ativo": agente is not None
+            "agente_inicializado": agente is not None
         }
     )
 
@@ -127,7 +127,7 @@ async def health_check():
         "status": "healthy",
         "app_name": settings.app_name,
         "version": settings.app_version,
-        "agente_ativo": agente is not None,
+        "agente_inicializado": agente is not None,
         "arquivos_carregados": {
             "cabecalho": uploaded_files["cabecalho"] is not None,
             "itens": uploaded_files["itens"] is not None,
@@ -271,8 +271,9 @@ async def chat(request: Request):
         
     except Exception as e:
         print(f"\n❌ ERRO no chat:")
+        print(f"   Mensagem: {mensagem if 'mensagem' in locals() else 'N/A'}")
         print(f"   Tipo: {type(e).__name__}")
-        print(f"   Mensagem: {str(e)}")
+        print(f"   Erro: {str(e)}")
         import traceback
         traceback.print_exc()
         return JSONResponse({
