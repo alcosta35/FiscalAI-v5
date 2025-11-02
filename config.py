@@ -33,9 +33,13 @@ class Settings(BaseSettings):
     
     # Pinecone settings
     pinecone_api_key: str = ""
+    pinecone_environment: str = "us-east-1"  # Região do Pinecone
     pinecone_index_name: str = "cfop-fiscal"
     pinecone_cloud: str = "aws"
     pinecone_region: str = "us-east-1"
+    pinecone_namespace: str = "cfop-production"  # Namespace para organizar vetores
+    pinecone_dimension: int = 1536  # Dimensão do text-embedding-3-small
+    pinecone_metric: str = "cosine"  # Métrica de similaridade
     
     # Ngrok settings
     ngrok_auth_token: str = ""
