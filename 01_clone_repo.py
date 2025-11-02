@@ -1,28 +1,20 @@
 # ==========================================
-# CÉLULA 5: Iniciar Servidor Web
+# CELL 1: Clone Repository
 # ==========================================
 
 print("""
 ╔════════════════════════════════════════════════════════════════╗
 ║                                                                ║
-║              🚀 INICIANDO FISCALAI v5.0                        ║
+║                   🚀 FiscalAI v5.0                             ║
+║            Validação Semântica de CFOP com IA                  ║
 ║                                                                ║
 ╚════════════════════════════════════════════════════════════════╝
 """)
 
-print("🌐 Iniciando servidor web...")
-print("   O upload dos arquivos CSV será feito pela interface\n")
+print("📥 Clonando repositório...")
+!git clone https://github.com/SEU-USUARIO/FiscalAI-v5
+%cd FiscalAI-v5
 
-print("="*70)
-print("✅ SERVIDOR INICIANDO...")
-print("="*70)
-print("\n📋 INSTRUÇÕES:")
-print("   1. Aguarde a URL pública aparecer (ngrok)")
-print("   2. Clique no link para abrir a interface")
-print("   3. Faça upload dos arquivos CSV na aba 'Início'")
-print("   4. Clique em 'Inicializar Sistema'")
-print("   5. Use o chat na aba 'Chat IA'\n")
-
-print("🚀 Iniciando...\n")
-
-!python main.py
+print("\n✅ Repositório clonado com sucesso!")
+print("📁 Estrutura do projeto:")
+!ls -la

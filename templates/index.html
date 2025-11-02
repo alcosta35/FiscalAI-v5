@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ app_name }}</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">
+                <svg width="60" height="60" viewBox="0 0 60 60">
+                    <rect width="60" height="60" rx="15" fill="#6366F1"/>
+                    <path d="M20 25 L25 20 L35 30 L40 25 L40 40 L20 40 Z" fill="white"/>
+                </svg>
+            </div>
+            <h1>Chat com Auditor Fiscal IA</h1>
+            <p class="subtitle">Faça perguntas sobre suas notas fiscais e CFOPs</p>
+        </div>
+    </header>
+
+    <!-- Navigation Tabs -->
+    <nav class="tabs">
+        <button class="tab" data-tab="inicio">🏠 Início</button>
+        <button class="tab" data-tab="estatisticas">📊 Estatísticas</button>
+        <button class="tab active" data-tab="chat">💬 Chat IA</button>
+        <button class="tab" data-tab="validacao">✓ Validação CFOP</button>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="container">
+        
+        <!-- Tab: Início -->
+        <div id="tab-inicio" class="tab-content" style="display: none;">
+            <div class="card">
+                <h2>📤 Upload de Arquivos</h2>
+                <p>Faça upload dos arquivos CSV para começar:</p>
+                
+                <div class="upload-section">
+                    <div class="upload-item">
+                        <h3>📄 Cabeçalhos das Notas Fiscais</h3>
+                        <input type="file" id="file-cabecalho" accept=".csv">
+                        <button onclick="uploadFile('cabecalho')">Enviar</button>
+                        <span class="status" id="status-cabecalho"></span>
+                    </div>
+                    
+                    <div class="upload-item">
+                        <h3>📦 Itens das Notas Fiscais</h3>
+                        <input type="file" id="file-itens" accept=".csv">
+                        <button onclick="uploadFile('itens')">Enviar</button>
+                        <span class="status" id="status-itens"></span>
+                    </div>
+                    
+                    <div class="upload-item">
+                        <h3>📋 Tabela de CFOPs</h3>
+                        <input type="file" id="file-cfop" accept=".csv">
+                        <button onclick="uploadFile('cfop')">Enviar</button>
+                        <span class="status" id="status-cfop"></span>
+                    </div>
+                </div>
+                
+                <button id="btn-inicializar" class="btn-primary" onclick="inicializarAgente()" disabled>
+                    🚀 Inicializar Sistema
+                </button>
+            </div>
+        </div>
+
+        <!-- Tab: Estatísticas -->
+        <div id="tab-estatisticas" class="tab-content" style="display: none;">
+            <div class="card">
+                <h2>📊 Estatísticas das Notas Fiscais</h2>
+                <div id="stats-content">
+                    {% if agente_ativo %}
+                    <p>Carregando estatísticas...</p>
+                    {% else %}
+                    <p class="warning">⚠️ Faça upload dos arquivos primeiro</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab: Chat IA -->
+        <div id="tab-chat" class="tab-content">
+            <div class="card chat-card">
+                <!-- Exemplos de Perguntas -->
+                <div class="examples-box">
+                    <div class="examples-header">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                            <circle cx="12" cy="12" r="10" stroke="#0ea5e9" stroke-width="2"/>
+                            <path d="M12 16v-4M12 8h.01" stroke="#0ea5e9" stroke-width="2" stroke-linecap="round"/>
+                        </svg>
+                        <strong>Exemplos de Perguntas:</strong>
+                    </div>
+                    <ul>
+                        <li>"Quantas notas fiscais temos no sistema?"</li>
+                        <li>"Valide o CFOP do item 2 da nota 35240134028316923228550010003680821895807710"</li>
+                        <li>"Quais são os CFOPs mais utilizados?"</li>
+                        <li>"Mostre a quinta nota fiscal"</li>
+                        <li>"Explique o CFOP 5102"</li>
+                    </ul>
+                </div>
+
+                <!-- Chat Messages -->
+                <div id="chat-messages" class="chat-messages">
+                    {% if not agente_ativo %}
+                    <div class="message system">
+                        <div class="message-content">
+                            ⚠️ <strong>Sistema não inicializado</strong><br>
+                            Faça upload dos arquivos CSV na aba "Início" para começar.
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Chat Input -->
+                <div class="chat-input-container">
+                    <input 
+                        type="text" 
+                        id="chat-input" 
+                        placeholder="Digite sua pergunta..."
+                        {% if not agente_ativo %}disabled{% endif %}
+                    >
+                    <button 
+                        id="btn-enviar" 
+                        onclick="enviarMensagem()"
+                        {% if not agente_ativo %}disabled{% endif %}
+                    >
+                        Enviar
+                    </button>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="quick-actions">
+                    <button onclick="totalNotas()" {% if not agente_ativo %}disabled{% endif %}>
+                        📋 Total de Notas
+                    </button>
+                    <button onclick="cfopsPopulares()" {% if not agente_ativo %}disabled{% endif %}>
+                        📊 CFOPs Populares
+                    </button>
+                    <button onclick="explicarCFOP()" {% if not agente_ativo %}disabled{% endif %}>
+                        ❓ Explicar CFOP
+                    </button>
+                    <button onclick="limparChat()">
+                        🗑️ Limpar Chat
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab: Validação CFOP -->
+        <div id="tab-validacao" class="tab-content" style="display: none;">
+            <div class="card">
+                <h2>✓ Validação de CFOP</h2>
+                
+                <div class="validation-form">
+                    <div class="form-group">
+                        <label>Chave da Nota Fiscal:</label>
+                        <input type="text" id="chave-nf" placeholder="35240134028316923228550010003680821895807710">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Número do Item:</label>
+                        <input type="number" id="numero-item" placeholder="1">
+                    </div>
+                    
+                    <button class="btn-primary" onclick="validarCFOP()" {% if not agente_ativo %}disabled{% endif %}>
+                        🔍 Validar CFOP
+                    </button>
+                </div>
+                
+                <div id="validation-result" class="validation-result"></div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <p>{{ app_name }} {{ version }} | Status: 
+            {% if agente_ativo %}
+            <span class="status-active">✓ Ativo</span>
+            {% else %}
+            <span class="status-inactive">⚠ Aguardando arquivos</span>
+            {% endif %}
+        </p>
+    </footer>
+
+    <script src="/static/js/app.js"></script>
+</body>
+</html>
